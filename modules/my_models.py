@@ -14,19 +14,16 @@ class Student(BaseModel):
 class Theme(BaseModel):
     """Модель темы
     """
-    id: int
-    name: str
+    # TODO Добавить поля для темы по образу Student
 
 
 class Question(BaseModel):
     """Модель вопроса
     """
-    id: int
-    quiestion: str
+    # TODO Добавить поля для вопросов по образу Student
 
 
 class Answer(BaseModel):
     """Модель ответа
     """
-    id: int
-    answer: str
+    # TODO Добавить поля для ответов по образу Student
