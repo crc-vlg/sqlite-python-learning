@@ -37,7 +37,6 @@ class MyDatabase:
             self._create_questions_table()
             self._create_answers_table()
             # наполнить таблицы данными
-            # TODO наполнить таблицы
             self.fill_students_table()
             self.fill_other_tables()
 
