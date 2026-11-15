@@ -12,14 +12,14 @@ class MyDatabase:
         """Инициализация класса"""
         self.conn: Connection | None = None
 
-        if self.connect_to_db():
+        if self.__connect_to_db():
             print("БД подключена успешно!")
         else:
             print("БД ошибка подключения!")
 
 
 
-    def connect_to_db(self) -> bool:
+    def __connect_to_db(self) -> bool:
         """Метод по подключению к базе данных
 
         Returns:
@@ -34,19 +34,19 @@ class MyDatabase:
             # если файла нет, создать его
             self.conn = sqlite3.connect(path_db)
             # создать таблицы
-            self._create_students_table()
-            self._create_themes_table()
-            self._create_questions_table()
-            self._create_answers_table()
+            self.__create_students_table()
+            self.__create_themes_table()
+            self.__create_questions_table()
+            self.__create_answers_table()
             # наполнить таблицы данными
-            self._fill_students_table()
-            self._fill_other_tables()
+            self.__fill_students_table()
+            self.__fill_other_tables()
 
         return bool(self.conn)
 
 
 
-    def _create_students_table(self):
+    def __create_students_table(self):
         """Метод по созданию таблицы с учениками
         """
         # проверка на наличие соединения
@@ -64,7 +64,7 @@ class MyDatabase:
         ''')
 
 
-    def _create_themes_table(self):
+    def __create_themes_table(self):
         """Метод по созданию таблицы с темами для тестов
         """
         # проверка на наличие соединения
@@ -79,7 +79,7 @@ class MyDatabase:
         ''')
 
 
-    def _create_questions_table(self):
+    def __create_questions_table(self):
         """Метод по созданию таблицы с вопросами
         """
         # проверка на наличие соединения
@@ -96,7 +96,7 @@ class MyDatabase:
         ''')
 
 
-    def _create_answers_table(self):
+    def __create_answers_table(self):
         """Метод по созданию таблицы с вариантами ответов на вопросы
         """
         # проверка на наличие соединения
@@ -114,7 +114,7 @@ class MyDatabase:
         ''')
 
 
-    def _fill_students_table(self):
+    def __fill_students_table(self):
         """Метод для заполнения таблицы с данными учащихся
         """
         # проверка наличия соединения
@@ -132,7 +132,7 @@ class MyDatabase:
         self.conn.commit()
 
 
-    def _fill_other_tables(self):
+    def __fill_other_tables(self):
         """Метод по заполнению оставшихся таблиц
         """
         # проверка наличия соединения
@@ -204,8 +204,14 @@ class MyDatabase:
         Returns:
             list[Theme]: список тем
         """
-        # TODO сделать по аналогии с get_students
-        return []
+        assert self.conn, "Соединение не установлено"
+        cur = self.conn.cursor()
+        cur.row_factory = sqlite3.Row
+        # получаем данные о темах из базы данных
+        cur.execute("SELECT id, name FROM themes")
+        themes_data = cur.fetchall()
+        # преобразуем их в объекты класса Student и возвращаем списком
+        return [Theme(**theme) for theme in themes_data]
 
 
     def get_questions(self, theme_id: int) -> list[Question]:
@@ -220,7 +226,7 @@ class MyDatabase:
         assert self.conn, "Соединение не установлено"
         cur = self.conn.cursor()
         cur.row_factory = sqlite3.Row
-
+        # получение вопросов по выбранной теме
         cur.execute("SELECT id, question, theme_id FROM questions WHERE theme_id=?", (theme_id,))
         questions_data = cur.fetchall()
         return [Question(**question) for question in questions_data]
@@ -235,5 +241,31 @@ class MyDatabase:
         Returns:
             list[Answer]: список вариантов ответов
         """
-        # TODO сделать по аналогии с get_questions
-        return []
+        assert self.conn, "Соединение не установлено"
+        cur = self.conn.cursor()
+        cur.row_factory = sqlite3.Row
+        # получение списка вариантов ответов по выбранному вопросу
+        cur.execute("SELECT id, answer, question_id, is_valid FROM answers WHERE question_id=?", (question_id,))
+        answers_data = cur.fetchall()
+        return [Answer(**answer) for answer in answers_data]
+
+    def check_answer(self, answer_id: int) -> bool:
+        """Метод проверки ответа
+
+        Args:
+            answer_id (int): идентификатор ответа
+
+        Returns:
+            bool: если верно, то истинно
+        """
+        assert self.conn, "Соединение не установлено"
+        cur = self.conn.cursor()
+        cur.row_factory = sqlite3.Row
+        # получаем ответ, который выбрал пользователь
+        cur.execute("SELECT id, answer, question_id, is_valid FROM answers WHERE id=?", (answer_id,))
+        answer: Answer = Answer(**cur.fetchone())
+        # проверяем верный(1) он или нет(0)
+        if answer.is_valid == 1:
+            return True
+        else:
+            return False
