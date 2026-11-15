@@ -2,6 +2,8 @@ import sqlite3
 from pathlib import Path
 from sqlite3 import Connection
 
+from modules.my_models import Answer, Question, Student, Theme
+
 
 class MyDatabase:
     """Класс по работе с базой данных"""
@@ -37,8 +39,8 @@ class MyDatabase:
             self._create_questions_table()
             self._create_answers_table()
             # наполнить таблицы данными
-            self.fill_students_table()
-            self.fill_other_tables()
+            self._fill_students_table()
+            self._fill_other_tables()
 
         return bool(self.conn)
 
@@ -112,8 +114,8 @@ class MyDatabase:
         ''')
 
 
-    def fill_students_table(self):
-        """Заполнить таблицу данными учащихся
+    def _fill_students_table(self):
+        """Метод для заполнения таблицы с данными учащихся
         """
         # проверка наличия соединения
         assert self.conn, "Соединение не установлено"
@@ -130,8 +132,8 @@ class MyDatabase:
         self.conn.commit()
 
 
-    def fill_other_tables(self):
-        """Заполнить оставшиеся таблицы
+    def _fill_other_tables(self):
+        """Метод по заполнению оставшихся таблиц
         """
         # проверка наличия соединения
         assert self.conn, "Соединение не установлено"
@@ -178,3 +180,60 @@ class MyDatabase:
         ]
         cur.executemany("INSERT INTO answers(answer, question_id, is_valid) VALUES (?, ?, ?)", answers_data)
         self.conn.commit()
+
+
+    def get_students(self) -> list[Student]:
+        """Метод получения всего списка учащихся
+
+        Returns:
+            list[Student]: список учащихся
+        """
+        assert self.conn, "Соединение не установлено"
+        cur = self.conn.cursor()
+        cur.row_factory = sqlite3.Row
+        # получаем данные о студентах из базы данных
+        cur.execute("SELECT id, last_name, first_name, age, grade FROM students")
+        student_data = cur.fetchall()
+        # преобразуем их в объекты класса Student и возвращаем списком
+        return [Student(**student) for student in student_data]
+
+
+    def get_themes(self) -> list[Theme]:
+        """Метод получения списка тем
+
+        Returns:
+            list[Theme]: список тем
+        """
+        # TODO сделать по аналогии с get_students
+        return []
+
+
+    def get_questions(self, theme_id: int) -> list[Question]:
+        """Метод получения списка вопросов по выбранной теме
+
+        Args:
+            theme_id (int): идентификатор темы
+
+        Returns:
+            list[Question]: список вопросов
+        """
+        assert self.conn, "Соединение не установлено"
+        cur = self.conn.cursor()
+        cur.row_factory = sqlite3.Row
+
+        cur.execute("SELECT id, question, theme_id FROM questions WHERE theme_id=?", (theme_id,))
+        questions_data = cur.fetchall()
+        return [Question(**question) for question in questions_data]
+
+
+    def get_answers(self, question_id: int) -> list[Answer]:
+        """Метод получения списка вариантов ответов
+
+        Args:
+            question_id (int): идентификатор вопроса
+
+        Returns:
+            list[Answer]: список вариантов ответов
+        """
+        # TODO сделать по аналогии с get_questions
+        return []
